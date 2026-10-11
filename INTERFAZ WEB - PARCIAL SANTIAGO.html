@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Despachos La Quinta</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#fff; --ink:#1b2430; --muted:#6b7684; --line:#e3e7ec;
+    --brand:#1f4e79; --ok:#1e7a46; --okbg:#e6f4ec; --warn:#a15c00; --warnbg:#fff3df;
+    --bad:#b3261e; --badbg:#fdeceb; --info:#334e68; --infobg:#e8eef5;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+  header{background:var(--brand);color:#fff;padding:16px 20px}
+  header h1{margin:0;font-size:20px}
+  header p{margin:2px 0 0;font-size:13px;opacity:.85}
+  nav{display:flex;gap:4px;padding:0 16px;background:#fff;border-bottom:1px solid var(--line);overflow-x:auto}
+  nav button{border:0;background:none;padding:14px 16px;font-size:15px;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent;white-space:nowrap}
+  nav button.active{color:var(--brand);border-bottom-color:var(--brand);font-weight:600}
+  main{max-width:960px;margin:0 auto;padding:20px 16px 60px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px;margin-bottom:16px}
+  h2{margin:0 0 14px;font-size:18px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:640px){.grid{grid-template-columns:1fr}}
+  label{display:block;font-size:13px;font-weight:600;margin-bottom:5px}
+  input,select{width:100%;padding:10px 11px;border:1px solid #c9d0d8;border-radius:7px;font-size:15px;background:#fff}
+  input:focus,select:focus{outline:2px solid #9bbbd9;border-color:var(--brand)}
+  .full{grid-column:1/-1}
+  .btn{background:var(--brand);color:#fff;border:0;border-radius:7px;padding:11px 20px;font-size:15px;font-weight:600;cursor:pointer}
+  .btn:disabled{opacity:.6;cursor:wait}
+  .btn.sec{background:#fff;color:var(--brand);border:1px solid var(--brand)}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .result{border-radius:10px;padding:16px 18px;margin-top:16px;border:1px solid;display:none}
+  .result h3{margin:0 0 6px;font-size:17px}
+  .result p{margin:3px 0;font-size:14px}
+  .result.APROBADO{background:var(--okbg);border-color:#9bd0b0;color:var(--ok)}
+  .result.ALERTA{background:var(--warnbg);border-color:#f0c987;color:var(--warn)}
+  .result.RECHAZADO,.result.CODIGO_INEXISTENTE,.result.ERROR{background:var(--badbg);border-color:#efaaa6;color:var(--bad)}
+  .result.INFO{background:var(--infobg);border-color:#b8c8da;color:var(--info)}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);background:#fafbfc;position:sticky;top:0}
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+  .tag{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:700}
+  .tag.APROBADO{background:var(--okbg);color:var(--ok)}
+  .tag.ALERTA{background:var(--warnbg);color:var(--warn)}
+  .tag.RECHAZADO{background:var(--badbg);color:var(--bad)}
+  tr.low td{background:#fff8ec}
+  .muted{color:var(--muted);font-size:13px}
+  .hint{font-size:12px;color:var(--muted);margin-top:4px}
+  .quick button{font-size:13px;padding:6px 10px;border:1px solid var(--line);background:#fafbfc;border-radius:6px;cursor:pointer}
+  .quick button:hover{background:#eef2f6}
+  details summary{cursor:pointer;font-weight:600}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Distribuidora La Quinta · Control de despachos</h1>
+  <p>Registro de salidas con validación de existencias</p>
+</header>
+
+<nav>
+  <button class="active" data-view="registro">Registrar despacho</button>
+  <button data-view="historial">Historial de movimientos</button>
+  <button data-view="inventario">Inventario</button>
+  <button data-view="config">Configuración</button>
+</nav>
+
+<main>
+
+  <!-- VISTA 1: REGISTRO -->
+  <section id="registro">
+    <div class="card">
+      <h2>Registrar un despacho</h2>
+      <form id="form">
+        <div class="grid">
+          <div>
+            <label for="solicitante">Solicitante</label>
+            <input id="solicitante" required placeholder="Nombre de quien pide">
+          </div>
+          <div>
+            <label for="correo">Correo</label>
+            <input id="correo" type="email" required placeholder="correo@ejemplo.com">
+          </div>
+          <div>
+            <label for="codigo_producto">Código del producto</label>
+            <input id="codigo_producto" required placeholder="INS-0101" autocomplete="off">
+          </div>
+          <div>
+            <label for="cantidad">Cantidad</label>
+            <input id="cantidad" type="number" min="1" step="1" required placeholder="10">
+          </div>
+          <div>
+            <label for="destino">Destino</label>
+            <input id="destino" required placeholder="Restaurante / sede">
+          </div>
+          <div>
+            <label for="motivo">Motivo</label>
+            <select id="motivo" required>
+              <option value="despacho">Despacho</option>
+              <option value="traslado entre sedes">Traslado entre sedes</option>
+              <option value="avería">Avería</option>
+            </select>
+          </div>
+          <div class="full row">
+            <button class="btn" id="enviar" type="submit">Registrar despacho</button>
+            <button class="btn sec" id="limpiar" type="button">Limpiar</button>
+          </div>
+        </div>
+      </form>
+      <div id="resultado" class="result"></div>
+    </div>
+
+    <div class="card">
+      <details>
+        <summary>Casos de prueba (llenan el formulario, no lo envían)</summary>
+        <div class="quick row" style="margin-top:12px">
+          <button data-caso="INS-0101|10">C1 · INS-0101 × 10</button>
+          <button data-caso="INS-0102|5">C2 · INS-0102 × 5</button>
+          <button data-caso="INS-0407|5">C3 · INS-0407 × 5</button>
+          <button data-caso="INS-9999|3">C4 · INS-9999 × 3</button>
+          <button data-caso="INS-0204|7">C5 · INS-0204 × 7</button>
+        </div>
+        <p class="hint">Cada caso completa código y cantidad; los demás datos los escribes tú. Luego presiona "Registrar despacho".</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- VISTA 2: HISTORIAL -->
+  <section id="historial" hidden>
+    <div class="card">
+      <div class="row" style="justify-content:space-between;margin-bottom:12px">
+        <h2 style="margin:0">Historial de movimientos</h2>
+        <button class="btn sec" id="recargarHist">Actualizar</button>
+      </div>
+      <p class="muted">Solo aparecen despachos aprobados o con alerta: los rechazados y los códigos inexistentes no se escriben en la tabla.</p>
+      <div id="histEstado" class="muted"></div>
+      <div class="tablewrap"><table id="histTabla"></table></div>
+    </div>
+  </section>
+
+  <!-- VISTA 3: INVENTARIO (opcional) -->
+  <section id="inventario" hidden>
+    <div class="card">
+      <div class="row" style="justify-content:space-between;margin-bottom:12px">
+        <h2 style="margin:0">Inventario actual</h2>
+        <button class="btn sec" id="recargarInv">Actualizar</button>
+      </div>
+      <p class="muted">Las filas resaltadas están por debajo del mínimo.</p>
+      <div id="invEstado" class="muted"></div>
+      <div class="tablewrap"><table id="invTabla"></table></div>
+    </div>
+  </section>
+
+  <!-- CONFIG -->
+  <section id="config" hidden>
+    <div class="card">
+      <h2>Configuración</h2>
+      <div class="grid">
+        <div class="full">
+          <label for="cfgWebhook">URL del webhook de Make</label>
+          <input id="cfgWebhook">
+        </div>
+        <div>
+          <label for="cfgBase">ID de la base de Airtable</label>
+          <input id="cfgBase">
+        </div>
+        <div>
+          <label for="cfgToken">Token de Airtable (solo lectura)</label>
+          <input id="cfgToken" type="password" placeholder="pat...">
+          <div class="hint">Se guarda solo en este navegador. No está en el código ni en el repositorio.</div>
+        </div>
+        <div class="full row">
+          <button class="btn" id="guardarCfg">Guardar</button>
+          <span id="cfgMsg" class="muted"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* ---------- Configuración ---------- */
+const DEFAULTS = {
+  webhook: "https://hook.us2.make.com/c4g3mv9a4nmn77vua52gkaoelkgtmtgm",
+  base: "appven16d5Jktfu43",
+  token: ""
+};
+function cfg(){
+  try{
+    return {
+      webhook: localStorage.getItem("lq_webhook") || DEFAULTS.webhook,
+      base: localStorage.getItem("lq_base") || DEFAULTS.base,
+      token: localStorage.getItem("lq_token") || DEFAULTS.token
+    };
+  }catch(e){ return {...DEFAULTS}; }
+}
+
+const $ = id => document.getElementById(id);
+
+/* ---------- Navegación entre vistas ---------- */
+document.querySelectorAll("nav button").forEach(b=>{
+  b.addEventListener("click",()=>{
+    document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
+    b.classList.add("active");
+    ["registro","historial","inventario","config"].forEach(v=>{ $(v).hidden = (v!==b.dataset.view); });
+    if(b.dataset.view==="historial") cargarHistorial();
+    if(b.dataset.view==="inventario") cargarInventario();
+    if(b.dataset.view==="config") pintarConfig();
+  });
+});
+
+/* ---------- Registro de despacho ---------- */
+function esc(s){ return String(s ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+function mostrarResultado(tipo, titulo, lineas){
+  const el = $("resultado");
+  el.className = "result " + tipo;
+  el.style.display = "block";
+  el.innerHTML = "<h3>"+esc(titulo)+"</h3>" + lineas.filter(Boolean).map(l=>"<p>"+l+"</p>").join("");
+}
+
+$("form").addEventListener("submit", async ev=>{
+  ev.preventDefault();
+  const btn = $("enviar");
+  const payload = {
+    solicitante: $("solicitante").value.trim(),
+    correo: $("correo").value.trim(),
+    codigo_producto: $("codigo_producto").value.trim().toUpperCase(),
+    cantidad: Number($("cantidad").value),
+    destino: $("destino").value.trim(),
+    motivo: $("motivo").value
+  };
+  btn.disabled = true; btn.textContent = "Procesando…";
+  $("resultado").style.display = "none";
+
+  try{
+    const r = await fetch(cfg().webhook, {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify(payload)
+    });
+    const texto = await r.text();
+    let data = null;
+    try{ data = JSON.parse(texto); }catch(e){}
+
+    if(!data){
+      mostrarResultado("INFO","Make recibió la solicitud pero no devolvió un resultado",[
+        "Respuesta: <b>"+esc(texto.slice(0,200) || "(vacía)")+"</b>",
+        "Esto pasa si el escenario está apagado o si falló un módulo. Revisa el historial del escenario en Make."
+      ]);
+    }else{
+      const res = data.resultado || "ERROR";
+      const titulos = {
+        APROBADO:"✅ Despacho aprobado",
+        ALERTA:"⚠️ Aprobado con alerta",
+        RECHAZADO:"⛔ Despacho rechazado",
+        CODIGO_INEXISTENTE:"❓ Código de producto inexistente"
+      };
+      const l = [];
+      if(data.mensaje) l.push(esc(data.mensaje));
+      if(data.producto) l.push("Producto: <b>"+esc(data.producto)+"</b>");
+      if(data.cantidad !== undefined) l.push("Cantidad solicitada: <b>"+esc(data.cantidad)+"</b>");
+      if(data.existencias_antes !== undefined) l.push("Existencias antes: <b>"+esc(data.existencias_antes)+"</b>");
+      if(data.existencias_despues !== undefined) l.push("Existencias después: <b>"+esc(data.existencias_despues)+"</b>");
+      if(data.existencias_disponibles !== undefined) l.push("Existencias disponibles: <b>"+esc(data.existencias_disponibles)+"</b>");
+      if(data.codigo) l.push("Código ingresado: <b>"+esc(data.codigo)+"</b>");
+      mostrarResultado(titulos[res] ? res : "ERROR", titulos[res] || ("Respuesta: "+res), l);
+    }
+  }catch(err){
+    mostrarResultado("ERROR","No se pudo contactar el proceso",[
+      "El navegador no pudo leer la respuesta de Make: "+esc(err.message),
+      "Revisa que el escenario esté activo y que los Webhook Response tengan la cabecera Access-Control-Allow-Origin = *."
+    ]);
+  }finally{
+    btn.disabled = false; btn.textContent = "Registrar despacho";
+  }
+});
+
+$("limpiar").addEventListener("click",()=>{ $("form").reset(); $("resultado").style.display="none"; });
+
+document.querySelectorAll(".quick button").forEach(b=>{
+  b.addEventListener("click",()=>{
+    const [c,q] = b.dataset.caso.split("|");
+    $("codigo_producto").value = c;
+    $("cantidad").value = q;
+    window.scrollTo({top:0,behavior:"smooth"});
+  });
+});
+
+/* ---------- Airtable (lectura) ---------- */
+async function leerTabla(nombre, query){
+  const {base, token} = cfg();
+  if(!token) throw new Error("Falta el token de Airtable. Pégalo en la pestaña Configuración.");
+  const url = "https://api.airtable.com/v0/"+base+"/"+encodeURIComponent(nombre)+(query||"");
+  const r = await fetch(url,{headers:{Authorization:"Bearer "+token}});
+  if(!r.ok){
+    let m = r.status+"";
+    try{ const j = await r.json(); m += " · " + (j.error?.message || j.error?.type || ""); }catch(e){}
+    throw new Error("Airtable respondió "+m);
+  }
+  return (await r.json()).records;
+}
+
+function fechaLocal(iso){
+  if(!iso) return "";
+  const d = new Date(iso);
+  if(isNaN(d)) return iso;
+  return d.toLocaleString("es-CO",{timeZone:"America/Bogota",dateStyle:"short",timeStyle:"medium"});
+}
+
+async function cargarHistorial(){
+  $("histEstado").textContent = "Cargando…";
+  $("histTabla").innerHTML = "";
+  try{
+    const recs = await leerTabla("movimientos","?pageSize=100&sort%5B0%5D%5Bfield%5D=fecha_hora&sort%5B0%5D%5Bdirection%5D=desc");
+    $("histEstado").textContent = recs.length ? recs.length+" movimiento(s)" : "Aún no hay movimientos registrados.";
+    if(!recs.length) return;
+    let h = "<thead><tr><th>Fecha y hora</th><th>Producto</th><th>Cant.</th><th>Antes</th><th>Después</th><th>Destino</th><th>Motivo</th><th>Solicitante</th><th>Resultado</th></tr></thead><tbody>";
+    for(const r of recs){
+      const f = r.fields;
+      h += "<tr><td>"+esc(fechaLocal(f.fecha_hora))+"</td>"
+        + "<td>"+esc(f.producto_nombre)+"<div class='muted'>"+esc(f.codigo_producto)+"</div></td>"
+        + "<td>"+esc(f.cantidad)+"</td><td>"+esc(f.existencias_antes)+"</td><td>"+esc(f.existencias_despues)+"</td>"
+        + "<td>"+esc(f.destino)+"</td><td>"+esc(f.motivo)+"</td>"
+        + "<td>"+esc(f.solicitante)+"<div class='muted'>"+esc(f.correo)+"</div></td>"
+        + "<td><span class='tag "+esc(f.resultado)+"'>"+esc(f.resultado)+"</span></td></tr>";
+    }
+    $("histTabla").innerHTML = h + "</tbody>";
+  }catch(e){ $("histEstado").textContent = e.message; }
+}
+
+async function cargarInventario(){
+  $("invEstado").textContent = "Cargando…";
+  $("invTabla").innerHTML = "";
+  try{
+    const recs = await leerTabla("inventario","?pageSize=100&sort%5B0%5D%5Bfield%5D=codigo");
+    $("invEstado").textContent = recs.length+" producto(s)";
+    let h = "<thead><tr><th>Código</th><th>Producto</th><th>Unidad</th><th>Existencias</th><th>Mínimo</th></tr></thead><tbody>";
+    for(const r of recs){
+      const f = r.fields, bajo = Number(f.existencias) < Number(f.minimo);
+      h += "<tr class='"+(bajo?"low":"")+"'><td>"+esc(f.codigo)+"</td><td>"+esc(f.producto)+"</td><td>"+esc(f.unidad)+"</td>"
+        + "<td><b>"+esc(f.existencias)+"</b>"+(bajo?" ⚠️":"")+"</td><td>"+esc(f.minimo)+"</td></tr>";
+    }
+    $("invTabla").innerHTML = h + "</tbody>";
+  }catch(e){ $("invEstado").textContent = e.message; }
+}
+
+$("recargarHist").addEventListener("click",cargarHistorial);
+$("recargarInv").addEventListener("click",cargarInventario);
+
+/* ---------- Configuración ---------- */
+function pintarConfig(){
+  const c = cfg();
+  $("cfgWebhook").value = c.webhook;
+  $("cfgBase").value = c.base;
+  $("cfgToken").value = c.token;
+}
+$("guardarCfg").addEventListener("click",()=>{
+  try{
+    localStorage.setItem("lq_webhook",$("cfgWebhook").value.trim());
+    localStorage.setItem("lq_base",$("cfgBase").value.trim());
+    localStorage.setItem("lq_token",$("cfgToken").value.trim());
+    $("cfgMsg").textContent = "Guardado.";
+  }catch(e){ $("cfgMsg").textContent = "No se pudo guardar en este navegador."; }
+});
+</script>
+</body>
+</html>
